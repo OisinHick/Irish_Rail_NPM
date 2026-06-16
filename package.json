@@ -3,6 +3,9 @@
   "version": "0.0.3",
   "description": "A handy node package to pull irish rail data and make it a bit quicker for developers to use in javascript",
   "main": "IRFunc.js",
+  "scripts": {
+    "test": "node test.js"
+  },
   "author": "Oisin Hickey",
   "license": "ISC",
   "dependencies": {
