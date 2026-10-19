@@ -1,20 +1,51 @@
 {
   "name": "irish-rail-npm",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "A handy node package to pull irish rail data and make it a bit quicker for developers to use in javascript",
   "main": "IRFunc.js",
+  "types": "IRFunc.d.ts",
+  "files": [
+    "IRFunc.js",
+    "IRFunc.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "test": "node test.js"
+    "test": "node --test test/unit.test.js",
+    "test:unit": "node --test test/unit.test.js",
+    "test:integration": "node --test test/integration.test.js",
+    "test:all": "node --test test/unit.test.js test/integration.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/unit.test.js",
+    "demo": "node test.js"
   },
+  "keywords": [
+    "irish-rail",
+    "iarnrod-eireann",
+    "realtime",
+    "trains",
+    "dart",
+    "ireland",
+    "transit",
+    "api"
+  ],
   "author": "Oisin Hickey",
   "license": "ISC",
-  "dependencies": {
-    "axios": "^1.4.0",
-    "jsdoc": "^4.0.2",
-    "xml2js": "^0.6.0"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ironic833/Irish_Rail_NPM"
+  },
+  "bugs": {
+    "url": "https://github.com/ironic833/Irish_Rail_NPM/issues"
+  },
+  "homepage": "https://github.com/ironic833/Irish_Rail_NPM#readme",
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "xml2js": "^0.6.0"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.2"
   }
 }

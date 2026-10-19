@@ -3,6 +3,8 @@ const xml2js = require('xml2js');
 
 const BASE_URL = 'http://api.irishrail.ie/realtime/realtime.asmx';
 
+let cachedStationCodes = null;
+
 /**
  * Helper to fetch XML data from Irish Rail API, parse it, and return a flattened array of objects.
  * @param {string} endpoint The endpoint name (e.g. 'getAllStationsXML')
@@ -15,7 +17,7 @@ async function fetchIrishRail(endpoint, params, rootKey, childKey) {
   const response = await axios.get(`${BASE_URL}/${endpoint}`, { params });
   const parsed = await xml2js.parseStringPromise(response.data);
   
-  const items = parsed[rootKey]?.[childKey] || [];
+  const items = parsed?.[rootKey]?.[childKey] || [];
   return items.map(item => {
     const flat = {};
     for (const key in item) {
@@ -42,7 +44,7 @@ async function getAllStations() {
   try {
     return await fetchIrishRail('getAllStationsXML', {}, 'ArrayOfObjStation', 'objStation');
   } catch (error) {
-    throw new Error('Failed to retrieve stations');
+    throw new Error('Failed to retrieve stations', { cause: error });
   }
 }
 
@@ -54,7 +56,7 @@ async function getCurrentTrains() {
   try {
     return await fetchIrishRail('getCurrentTrainsXML', {}, 'ArrayOfObjTrainPositions', 'objTrainPositions');
   } catch (error) {
-    throw new Error('Failed to retrieve train positions');
+    throw new Error('Failed to retrieve train positions', { cause: error });
   }
 }
 
@@ -64,11 +66,12 @@ async function getCurrentTrains() {
  * @returns {Promise<Array<{StationDesc: string, StationAlias: string, StationLatitude: string, StationLongitude: string, StationCode: string, StationId: string}>>}
  */
 async function getAllStationsFilter(stationType) {
-  const type = ['A', 'M', 'S', 'D'].includes(stationType) ? stationType : 'A';
+  const normalizedType = typeof stationType === 'string' ? stationType.trim().toUpperCase() : 'A';
+  const type = ['A', 'M', 'S', 'D'].includes(normalizedType) ? normalizedType : 'A';
   try {
     return await fetchIrishRail('getAllStationsXML_WithStationType', { StationType: type }, 'ArrayOfObjStation', 'objStation');
   } catch (error) {
-    throw new Error('Failed to retrieve stations');
+    throw new Error('Failed to retrieve stations', { cause: error });
   }
 }
 
@@ -78,11 +81,12 @@ async function getAllStationsFilter(stationType) {
  * @returns {Promise<Array<{TrainStatus: string, TrainLatitude: string, TrainLongitude: string, TrainCode: string, TrainDate: string, PublicMessage: string, Direction: string}>>}
  */
 async function getAllTrainsFilter(trainType) {
-  const type = ['A', 'M', 'S', 'D'].includes(trainType) ? trainType : 'A';
+  const normalizedType = typeof trainType === 'string' ? trainType.trim().toUpperCase() : 'A';
+  const type = ['A', 'M', 'S', 'D'].includes(normalizedType) ? normalizedType : 'A';
   try {
     return await fetchIrishRail('getCurrentTrainsXML_WithTrainType', { TrainType: type }, 'ArrayOfObjTrainPositions', 'objTrainPositions');
   } catch (error) {
-    throw new Error('Failed to retrieve train positions');
+    throw new Error('Failed to retrieve train positions', { cause: error });
   }
 }
 
@@ -92,11 +96,10 @@ async function getAllTrainsFilter(trainType) {
  * @returns {Promise<Array<object>>}
  */
 async function getAllTrainsServing(stationDesc) {
-  console.log("Please note these trains are serving this station in the range of the next 90 minutes only");
   try {
     return await fetchIrishRail('getStationDataByNameXML', { StationDesc: stationDesc }, 'ArrayOfObjStationData', 'objStationData');
   } catch (error) {
-    throw new Error('Failed to retrieve train data');
+    throw new Error('Failed to retrieve train data', { cause: error });
   }
 }
 
@@ -110,20 +113,27 @@ async function getAllTrainsServingWthNums(station, time) {
   try {
     return await fetchIrishRail('getStationDataByNameXML_withNumMins', { StationDesc: station, NumMins: time }, 'ArrayOfObjStationData', 'objStationData');
   } catch (error) {
-    throw new Error('Failed to retrieve train data');
+    throw new Error('Failed to retrieve train data', { cause: error });
   }
 }
 
 /**
  * Returns a list of all station codes only.
+ * @param {object} [options] Optional options object
+ * @param {boolean} [options.forceRefresh=false] Whether to bypass cache and re-fetch stations
  * @returns {Promise<Array<string>>}
  */
-async function getAllStationCodes() {
+async function getAllStationCodes(options = {}) {
+  const { forceRefresh = false } = options;
+  if (!forceRefresh && cachedStationCodes) {
+    return cachedStationCodes;
+  }
   try {
     const stations = await getAllStations();
-    return stations.map((station) => station.StationCode);
+    cachedStationCodes = stations.map((station) => station.StationCode);
+    return cachedStationCodes;
   } catch (error) {
-    throw new Error('Failed to retrieve station codes');
+    throw new Error('Failed to retrieve station codes', { cause: error });
   }
 }
 
@@ -133,12 +143,55 @@ async function getAllStationCodes() {
  * @returns {Promise<Array<object>>}
  */
 async function getStationDataByCode(stationCode) {
-  console.log(`${BASE_URL}/getStationDataByCodeXML?StationCode=${stationCode}`);
+  const code = typeof stationCode === 'string' ? stationCode.trim().toUpperCase() : stationCode;
   try {
-    return await fetchIrishRail('getStationDataByCodeXML', { StationCode: stationCode }, 'ArrayOfObjStationData', 'objStationData');
+    return await fetchIrishRail('getStationDataByCodeXML', { StationCode: code }, 'ArrayOfObjStationData', 'objStationData');
   } catch (error) {
-    console.log('Error:', error.message);
-    throw new Error('Failed to retrieve station data');
+    throw new Error('Failed to retrieve station data', { cause: error });
+  }
+}
+
+/**
+ * Returns station data for a specific station code within a given minute range.
+ * @param {string} stationCode Station code (e.g. 'TARA')
+ * @param {number|string} time Minutes range (between 5 and 90)
+ * @returns {Promise<Array<object>>}
+ */
+async function getStationDataByCodeWithNums(stationCode, time) {
+  const code = typeof stationCode === 'string' ? stationCode.trim().toUpperCase() : stationCode;
+  try {
+    return await fetchIrishRail('getStationDataByCodeXML_WithNumMins', { StationCode: code, NumMins: time }, 'ArrayOfObjStationData', 'objStationData');
+  } catch (error) {
+    throw new Error('Failed to retrieve station data', { cause: error });
+  }
+}
+
+/**
+ * Filters stations by text/keyword query.
+ * @param {string} stationText Text to search for in station description
+ * @returns {Promise<Array<{StationDesc_sp: string, StationDesc: string, StationCode: string}>>}
+ */
+async function getStationsFilter(stationText) {
+  try {
+    return await fetchIrishRail('getStationsFilterXML', { StationText: stationText }, 'ArrayOfObjStationFilter', 'objStationFilter');
+  } catch (error) {
+    throw new Error('Failed to retrieve station filter data', { cause: error });
+  }
+}
+
+/**
+ * Returns stop-by-stop movements and timetable progression for a specific train and date.
+ * @param {string} trainId The train identifier (e.g. 'E950')
+ * @param {string} trainDate Date of the train (e.g. '19 Oct 2026' or '19/10/2026')
+ * @returns {Promise<Array<object>>}
+ */
+async function getTrainMovements(trainId, trainDate) {
+  const id = typeof trainId === 'string' ? trainId.trim() : trainId;
+  const date = typeof trainDate === 'string' ? trainDate.trim() : trainDate;
+  try {
+    return await fetchIrishRail('getTrainMovementsXML', { TrainId: id, TrainDate: date }, 'ArrayOfObjTrainMovements', 'objTrainMovements');
+  } catch (error) {
+    throw new Error('Failed to retrieve train movements', { cause: error });
   }
 }
 
@@ -149,21 +202,28 @@ async function getStationDataByCode(stationCode) {
  * @returns {Promise<Array<object>>}
  */
 async function getAllTrainsByStationCode(stationCode) {
+  const code = typeof stationCode === 'string' ? stationCode.trim().toUpperCase() : stationCode;
   const stationCodes = await getAllStationCodes();
-  if (!stationCodes.includes(stationCode)) {
+  if (!stationCodes.includes(code)) {
     throw new Error(`Invalid station code: ${stationCode}`);
   }
-  return getStationDataByCode(stationCode);
+  return getStationDataByCode(code);
 }
 
 module.exports = {
+  BASE_URL,
+  fetchIrishRail,
   getAllStations,
   getCurrentTrains,
   getAllStationsFilter,
   getAllTrainsFilter,
   getAllTrainsServing,
   getAllTrainsServingWthNums,
+  getAllTrainsServingWithNums: getAllTrainsServingWthNums,
   getAllStationCodes,
   getAllTrainsByStationCode,
   getStationDataByCode,
+  getStationDataByCodeWithNums,
+  getStationsFilter,
+  getTrainMovements,
 };
