@@ -1,5 +1,5 @@
 {
-  "name": "irish-rail-npm",
+  "name": "@oisinhick/irish-rail-npm",
   "version": "0.1.0",
   "description": "A handy node package to pull irish rail data and make it a bit quicker for developers to use in javascript",
   "main": "IRFunc.js",
@@ -38,6 +38,9 @@
     "url": "https://github.com/OisinHick/Irish_Rail_NPM/issues"
   },
   "homepage": "https://github.com/OisinHick/Irish_Rail_NPM#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "engines": {
     "node": ">=14"
   },

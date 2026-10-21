@@ -8,9 +8,33 @@ This package calls the official public Irish Rail Realtime API and handles the X
 
 ## Installation
 
+### npm
+
 ```bash
 npm install irish-rail-npm
 ```
+
+### GitHub Packages
+
+GitHub Packages requires authentication. Create a personal access token (classic)
+with `read:packages`, set it as the `GITHUB_TOKEN` environment variable, and add
+this registry configuration to your user-level `.npmrc`:
+
+```ini
+@oisinhick:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+Install the GitHub Packages build with:
+
+```bash
+npm install @oisinhick/irish-rail-npm
+```
+
+The `@oisinhick/irish-rail-npm` package is published to GitHub Packages when a
+GitHub Release is published. The first published package is private by default;
+change its visibility to public in the repository's **Packages** settings if you
+want unauthenticated public access.
 
 ## Quick Start
 
