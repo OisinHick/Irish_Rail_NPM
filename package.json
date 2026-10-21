@@ -32,12 +32,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ironic833/Irish_Rail_NPM"
+    "url": "git+https://github.com/OisinHick/Irish_Rail_NPM.git"
   },
   "bugs": {
-    "url": "https://github.com/ironic833/Irish_Rail_NPM/issues"
+    "url": "https://github.com/OisinHick/Irish_Rail_NPM/issues"
   },
-  "homepage": "https://github.com/ironic833/Irish_Rail_NPM#readme",
+  "homepage": "https://github.com/OisinHick/Irish_Rail_NPM#readme",
   "engines": {
     "node": ">=14"
   },

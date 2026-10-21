@@ -1,8 +1,10 @@
 # Irish_Rail_NPM
 
+[![npm version](https://img.shields.io/npm/v/irish-rail-npm)](https://www.npmjs.com/package/irish-rail-npm)
+
 A lightweight and modern Node.js wrapper to pull Irish Rail real-time data quickly and easily in JavaScript.
 
-This package calls the official public Irish Rail Realtime API and handles the XML parsing under the hood, returning clean, flattened JavaScript objects.
+This package calls the official public Irish Rail Realtime API and handles the XML parsing under the hood, returning clean, flattened JavaScript objects. Install it from [npm](https://www.npmjs.com/package/irish-rail-npm).
 
 ## Installation
 
